@@ -1,0 +1,5 @@
+{
+  "name": "Postgres SQL Visualizer",
+  "description": "A modern frontend-only web app for visualizing PostgreSQL schemas, writing queries, and exploring mock data with charts and execution plans.",
+  "requestFramePermissions": []
+}
