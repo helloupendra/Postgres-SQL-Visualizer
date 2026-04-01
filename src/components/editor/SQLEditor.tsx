@@ -1,9 +1,9 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
-import { Play, Save, FileCode2, History, AlignLeft, Clock, X, Plus, GitMerge, ChevronDown, Code } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Play, Save, FileCode2, History, AlignLeft, Clock, X, Plus, GitMerge, ChevronDown, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -23,6 +23,8 @@ interface SQLEditorProps {
   onTabChange: (id: string) => void;
   onTabAdd: () => void;
   onTabClose: (id: string) => void;
+  isSchemaVisible: boolean;
+  onToggleSchema: () => void;
 }
 
 export function SQLEditor({ 
@@ -37,7 +39,9 @@ export function SQLEditor({
   activeTabId,
   onTabChange,
   onTabAdd,
-  onTabClose
+  onTabClose,
+  isSchemaVisible,
+  onToggleSchema
 }: SQLEditorProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSaveOpen, setIsSaveOpen] = useState(false);
@@ -305,6 +309,16 @@ export function SQLEditor({
             </Dialog.Portal>
           </Dialog.Root>
           
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" onClick={onToggleSchema} className="h-7 gap-1 text-xs text-zinc-400 hover:text-zinc-100">
+                {isSchemaVisible ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+                Schema
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isSchemaVisible ? "Hide Schema Visualizer" : "Show Schema Visualizer"}</TooltipContent>
+          </Tooltip>
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 

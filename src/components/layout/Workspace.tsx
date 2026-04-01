@@ -6,6 +6,7 @@ import { ResultsPanel } from "@/components/results/ResultsPanel";
 import { ExplainPanel } from "@/components/results/ExplainPanel";
 import { getMockResultForQuery, mockExplainPlan } from "@/data/mock";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 
 export type QueryHistoryItem = {
   query: string;
@@ -36,6 +37,7 @@ export function Workspace({
   const [resultsTab, setResultsTab] = useState<"results" | "chart">("results");
   const [isExplainOpen, setIsExplainOpen] = useState(false);
   const [explainPlan, setExplainPlan] = useState<any | null>(null);
+  const [isSchemaVisible, setIsSchemaVisible] = useState(true);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -122,6 +124,8 @@ export function Workspace({
               onTabChange={setActiveTabId}
               onTabAdd={handleTabAdd}
               onTabClose={handleTabClose}
+              isSchemaVisible={isSchemaVisible}
+              onToggleSchema={() => setIsSchemaVisible(!isSchemaVisible)}
             />
           </Panel>
           
@@ -148,24 +152,37 @@ export function Workspace({
         </PanelGroup>
       </Panel>
 
-      <ResizeHandle direction="horizontal" />
+      {isSchemaVisible && (
+        <>
+          <ResizeHandle direction="horizontal" />
 
-      {/* Right Panel: Schema Visualizer */}
-      <Panel defaultSize={40} minSize={20}>
-        <div className="flex h-full flex-col border-l border-zinc-800 bg-zinc-950">
-          <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-            <h2 className="text-sm font-semibold text-zinc-100">Schema Visualizer</h2>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
-                e-commerce_db
-              </span>
+          {/* Right Panel: Schema Visualizer */}
+          <Panel defaultSize={40} minSize={20}>
+            <div className="flex h-full flex-col border-l border-zinc-800/80 bg-zinc-950/40 relative">
+              <div className="flex items-center justify-between border-b border-zinc-800/60 bg-zinc-950/80 px-5 py-3 backdrop-blur-md z-20 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-sm font-semibold text-zinc-100 tracking-wide">Schema Visualizer</h2>
+                  <span className="rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-400">
+                    e-commerce_db
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setIsSchemaVisible(false)}
+                    className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
+                    title="Close Schema Visualizer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="relative flex-1 overflow-hidden bg-zinc-950">
+                <SchemaVisualizer />
+              </div>
             </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <SchemaVisualizer />
-          </div>
-        </div>
-      </Panel>
+          </Panel>
+        </>
+      )}
     </PanelGroup>
   );
 }
