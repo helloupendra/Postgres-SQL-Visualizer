@@ -322,7 +322,6 @@ export function SQLEditor({
                     : "border-transparent text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900/90 hover:text-zinc-100",
                 )}
               >
-              <Button variant="ghost" size="sm" onClick={onToggleSchema} className="h-7 gap-1 text-xs text-zinc-400 hover:text-zinc-100">
                 {isSchemaVisible ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
                 Schema
               </Button>

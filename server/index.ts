@@ -44,9 +44,17 @@ app.post("/api/query", async (req, res) => {
 app.get("/api/schema", async (req, res) => {
   try {
     const tablesQuery = `
-      SELECT t.table_name
+      SELECT
+        table_schema as schema,
+        table_name as name,
+        (SELECT obj_description(pgc.oid, 'pg_class')
+         FROM pg_catalog.pg_class pgc
+         JOIN pg_catalog.pg_namespace pgn ON pgn.oid = pgc.relnamespace
+         WHERE pgc.relname = t.table_name AND pgn.nspname = t.table_schema
+        ) as description
       FROM information_schema.tables t
-      WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
+      WHERE t.table_schema NOT IN ('information_schema', 'pg_catalog')
+      AND t.table_type = 'BASE TABLE'
     `;
     const tablesResult = await pool.query(tablesQuery);
 
@@ -54,7 +62,8 @@ app.get("/api/schema", async (req, res) => {
     
     // Iterate manually over tables to get their columns, primary keys and foreign keys
     for (const row of tablesResult.rows) {
-      const tableName = row.table_name;
+      const tableName = row.name;
+      const tableSchema = row.schema;
       
       const colsQuery = `
         SELECT 
@@ -63,12 +72,15 @@ app.get("/api/schema", async (req, res) => {
             c.is_nullable,
             (SELECT COUNT(*) FROM information_schema.key_column_usage kcu 
              JOIN information_schema.table_constraints tc ON kcu.constraint_name = tc.constraint_name 
-             WHERE tc.constraint_type = 'PRIMARY KEY' AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name
+             WHERE tc.constraint_type = 'PRIMARY KEY'
+             AND kcu.table_schema = c.table_schema
+             AND kcu.table_name = c.table_name
+             AND kcu.column_name = c.column_name
             ) > 0 as is_primary
         FROM information_schema.columns c
-        WHERE c.table_schema = 'public' AND c.table_name = $1
+        WHERE c.table_schema = $1 AND c.table_name = $2
       `;
-      const colsResult = await pool.query(colsQuery, [tableName]);
+      const colsResult = await pool.query(colsQuery, [tableSchema, tableName]);
       
       // Look up foreign keys referring to other tables
       const fksQuery = `
@@ -84,9 +96,9 @@ app.get("/api/schema", async (req, res) => {
             JOIN information_schema.constraint_column_usage AS ccu
               ON ccu.constraint_name = tc.constraint_name
               AND ccu.table_schema = tc.table_schema
-        WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = $1
+        WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = $1 AND tc.table_name = $2
       `;
-      const fksResult = await pool.query(fksQuery, [tableName]);
+      const fksResult = await pool.query(fksQuery, [tableSchema, tableName]);
       
       const columns = colsResult.rows.map(col => {
         const fk = fksResult.rows.find(f => f.column_name === col.name);
@@ -95,13 +107,15 @@ app.get("/api/schema", async (req, res) => {
           type: col.type,
           isPrimary: col.is_primary,
           isForeign: !!fk,
-          references: fk ? \`\${fk.foreign_table_name}.\${fk.foreign_column_name}\` : undefined
+          references: fk ? fk.foreign_table_name + "." + fk.foreign_column_name : undefined
         };
       });
 
       schemaData.push({
-        id: tableName,
+        id: tableSchema + "." + tableName,
         name: tableName,
+        schema: tableSchema,
+        description: row.description,
         columns
       });
     }
@@ -114,5 +128,5 @@ app.get("/api/schema", async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(\`Backend server running on port \${PORT}\`);
+  console.log("Backend server running on port " + PORT);
 });
