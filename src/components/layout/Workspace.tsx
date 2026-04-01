@@ -4,7 +4,7 @@ import { SQLEditor } from "@/components/editor/SQLEditor";
 import { SchemaVisualizer } from "@/components/schema/SchemaVisualizer";
 import { ResultsPanel } from "@/components/results/ResultsPanel";
 import { ExplainPanel } from "@/components/results/ExplainPanel";
-import { getMockResultForQuery, mockExplainPlan } from "@/data/mock";
+import { mockExplainPlan } from "@/data/mock";
 import { toast } from "sonner";
 
 export type QueryHistoryItem = {
@@ -62,19 +62,34 @@ export function Workspace({
     });
 
     const startTime = performance.now();
-    // Simulate network delay
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql: activeTab.query })
+      });
+      
+      const resData = await response.json();
       const endTime = performance.now();
-      const { data, queryName: name } = getMockResultForQuery(activeTab.query);
-      setResults(data);
-      setQueryName(name);
+
+      if (!response.ok) {
+        throw new Error(resData.error || 'Failed to execute query');
+      }
+
+      setResults(resData.data);
+      setQueryName("Query Results");
       setIsRunning(false);
-      setExecutionTime(Math.round(endTime - startTime + 150)); // Add a little mock processing time
-      toast.success(`Query executed successfully. ${data.length} rows returned.`);
-    }, 800);
+      setExecutionTime(Math.round(endTime - startTime));
+      toast.success(`Query executed successfully. ${resData.rowCount || resData.data.length} rows returned.`);
+    } catch (error: any) {
+      toast.error(error.message);
+      setIsRunning(false);
+      setResults([]);
+    }
   };
 
-  const handleExplain = () => {
+  const handleExplain = async () => {
     if (!activeTab?.query.trim()) {
       toast.error("Please enter a query to explain");
       return;
@@ -82,10 +97,31 @@ export function Workspace({
     setIsRunning(true);
     setIsExplainOpen(true);
     
-    setTimeout(() => {
-      setExplainPlan(mockExplainPlan);
+    try {
+      // Just run EXPLAIN query against the database
+      const explainSql = `EXPLAIN (FORMAT JSON) ${activeTab.query}`;
+      const response = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql: explainSql })
+      });
+      
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.error || 'Failed to explain query');
+      }
+
+      // Format the returned explain plan (usually the first row contains the plan)
+      // Postgres returns the plan in the first column of the first row
+      const planRow = resData.data[0];
+      const planKey = Object.keys(planRow)[0];
+      setExplainPlan(planRow[planKey][0]); // usually an array of plans
       setIsRunning(false);
-    }, 400);
+    } catch (error: any) {
+      toast.error(`Explain failed: ${error.message}`);
+      setExplainPlan(null);
+      setIsRunning(false);
+    }
   };
 
   const handleTabAdd = () => {

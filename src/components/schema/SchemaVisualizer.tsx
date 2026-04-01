@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -12,8 +12,8 @@ import {
   Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { mockSchema } from "@/data/mock";
-import { Key, Link, Table2 } from "lucide-react";
+import { Key, Link as LinkIcon, Table2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const nodeTypes = {
   tableNode: TableNode,
@@ -28,11 +28,11 @@ function TableNode({ data }: { data: any }) {
         <span>{data.name}</span>
       </div>
       <div className="flex flex-col p-2">
-        {data.columns.map((col: any) => (
+        {data.columns?.map((col: any) => (
           <div key={col.name} className="flex items-center justify-between py-1.5 text-xs hover:bg-zinc-800/50 rounded px-1 transition-colors">
             <div className="flex items-center gap-1.5">
               {col.isPrimary && <Key className="h-3.5 w-3.5 text-amber-400" />}
-              {col.isForeign && <Link className="h-3.5 w-3.5 text-blue-400" />}
+              {col.isForeign && <LinkIcon className="h-3.5 w-3.5 text-blue-400" />}
               {!col.isPrimary && !col.isForeign && <span className="w-3.5" />}
               <span className="text-zinc-300 font-medium">{col.name}</span>
             </div>
@@ -46,40 +46,63 @@ function TableNode({ data }: { data: any }) {
 }
 
 export function SchemaVisualizer() {
-  // Generate nodes and edges from mockSchema
-  const initialNodes = useMemo(() => {
-    return mockSchema.map((table, index) => ({
-      id: table.id,
-      type: "tableNode",
-      position: { x: (index % 3) * 300, y: Math.floor(index / 3) * 250 },
-      data: table,
-    }));
-  }, []);
-
-  const initialEdges = useMemo(() => {
-    const edges: any[] = [];
-    mockSchema.forEach((table) => {
-      table.columns.forEach((col) => {
-        if (col.isForeign && col.references) {
-          const [targetTable] = col.references.split(".");
-          edges.push({
-            id: `e-${table.id}-${targetTable}`,
-            source: targetTable,
-            target: table.id,
-            animated: true,
-            style: { stroke: "#3b82f6", strokeWidth: 2 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
-          });
-        }
-      });
-    });
-    return edges;
-  }, []);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [loading, setLoading] = useState(true);
 
   const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+
+  useEffect(() => {
+    async function fetchSchema() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/schema");
+        if (!res.ok) throw new Error("Failed to load schema");
+        const schemaData = await res.json();
+        
+        const newNodes = schemaData.map((table: any, index: number) => ({
+          id: table.id,
+          type: "tableNode",
+          position: { x: (index % 3) * 300, y: Math.floor(index / 3) * 250 },
+          data: table,
+        }));
+
+        const newEdges: any[] = [];
+        schemaData.forEach((table: any) => {
+          table.columns.forEach((col: any) => {
+            if (col.isForeign && col.references) {
+              const [targetTable] = col.references.split(".");
+              newEdges.push({
+                id: `e-${table.id}-${targetTable}`,
+                source: targetTable,
+                target: table.id,
+                animated: true,
+                style: { stroke: "#3b82f6", strokeWidth: 2 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: "#3b82f6" },
+              });
+            }
+          });
+        });
+
+        setNodes(newNodes);
+        setEdges(newEdges);
+      } catch (err: any) {
+        toast.error(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSchema();
+  }, [setNodes, setEdges]);
+
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-zinc-950">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full bg-zinc-950">
