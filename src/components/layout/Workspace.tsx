@@ -7,7 +7,6 @@ import { ExplainPanel } from "@/components/results/ExplainPanel";
 import { mockSavedQueries } from "@/data/mock";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { X } from "lucide-react";
 
 export type QueryHistoryItem = {
   query: string;
@@ -225,29 +224,6 @@ export function Workspace({
                 onLoadSampleQuery={handleLoadSampleQuery}
               />
             </motion.div>
-          <Panel defaultSize={40} minSize={20}>
-            <div className="flex h-full flex-col border-l border-zinc-800/80 bg-zinc-950/40 relative">
-              <div className="flex items-center justify-between border-b border-zinc-800/60 bg-zinc-950/80 px-5 py-3 backdrop-blur-md z-20 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-sm font-semibold text-zinc-100 tracking-wide">Schema Visualizer</h2>
-                  <span className="rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-400">
-                    e-commerce_db
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setIsSchemaVisible(false)}
-                    className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
-                    title="Close Schema Visualizer"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="relative flex-1 overflow-hidden bg-zinc-950">
-                <SchemaVisualizer />
-              </div>
-            </div>
           </Panel>
         </>
       )}
