@@ -1,12 +1,14 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
-import { Play, Save, FileCode2, History, AlignLeft, Clock, X, Plus, GitMerge } from "lucide-react";
+import { Play, Save, FileCode2, History, AlignLeft, Clock, X, Plus, GitMerge, ChevronDown, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { cn } from "@/lib/utils";
+import { mockSchema } from "@/data/mock";
 
 interface SQLEditorProps {
   value: string;
@@ -41,8 +43,15 @@ export function SQLEditor({
   const [isSaveOpen, setIsSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
 
-  const handleFormat = () => {
-    toast.success("SQL formatted successfully");
+  const sqlSchema = useMemo(() => {
+    return mockSchema.reduce((acc, table) => {
+      acc[table.name] = table.columns.map(c => c.name);
+      return acc;
+    }, {} as Record<string, string[]>);
+  }, []);
+
+  const handleFormat = (style: string = "Standard") => {
+    toast.success(`SQL formatted successfully (${style})`);
   };
 
   const handleSaveSubmit = (e: React.FormEvent) => {
@@ -51,6 +60,10 @@ export function SQLEditor({
     onSave(saveName);
     setIsSaveOpen(false);
     setSaveName("");
+  };
+
+  const insertSnippet = (snippet: string) => {
+    onChange(value ? `${value}\n\n${snippet}` : snippet);
   };
 
   return (
@@ -152,15 +165,100 @@ export function SQLEditor({
             </Dialog.Portal>
           </Dialog.Root>
           
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" onClick={handleFormat} className="h-7 gap-1 text-xs text-zinc-400 hover:text-zinc-100">
-                <AlignLeft className="h-3.5 w-3.5" />
-                Format
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Format SQL (âŒ˜â‡§F)</TooltipContent>
-          </Tooltip>
+          <DropdownMenu.Root>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenu.Trigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-zinc-400 hover:text-zinc-100">
+                    <Code className="h-3.5 w-3.5" />
+                    Snippets
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenu.Trigger>
+              </TooltipTrigger>
+              <TooltipContent>Insert SQL Snippet</TooltipContent>
+            </Tooltip>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content 
+                align="end"
+                className="z-50 min-w-[10rem] overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 p-1 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+              >
+                <DropdownMenu.Item 
+                  onClick={() => insertSnippet("SELECT * FROM table_name;")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  SELECT
+                </DropdownMenu.Item>
+                <DropdownMenu.Item 
+                  onClick={() => insertSnippet("INSERT INTO table_name (column1, column2)\nVALUES (value1, value2);")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  INSERT
+                </DropdownMenu.Item>
+                <DropdownMenu.Item 
+                  onClick={() => insertSnippet("UPDATE table_name\nSET column1 = value1\nWHERE condition;")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  UPDATE
+                </DropdownMenu.Item>
+                <DropdownMenu.Item 
+                  onClick={() => insertSnippet("DELETE FROM table_name\nWHERE condition;")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  DELETE
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+
+          <DropdownMenu.Root>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenu.Trigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-zinc-400 hover:text-zinc-100">
+                    <AlignLeft className="h-3.5 w-3.5" />
+                    Format
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenu.Trigger>
+              </TooltipTrigger>
+              <TooltipContent>Format SQL Options</TooltipContent>
+            </Tooltip>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content 
+                align="end"
+                className="z-50 min-w-[10rem] overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 p-1 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+              >
+                <DropdownMenu.Item 
+                  onClick={() => handleFormat("Standard")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  Standard Format
+                </DropdownMenu.Item>
+                <DropdownMenu.Item 
+                  onClick={() => handleFormat("Compact")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  Compact Format
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="-mx-1 my-1 h-px bg-zinc-800" />
+                <DropdownMenu.Item 
+                  onClick={() => handleFormat("Uppercase Keywords")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  Uppercase Keywords
+                </DropdownMenu.Item>
+                <DropdownMenu.Item 
+                  onClick={() => handleFormat("Lowercase Keywords")}
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-xs outline-none transition-colors focus:bg-zinc-800 focus:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-zinc-300"
+                >
+                  Lowercase Keywords
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
           
           <Tooltip>
             <TooltipTrigger asChild>
@@ -230,7 +328,7 @@ export function SQLEditor({
           value={value}
           height="100%"
           theme="dark"
-          extensions={[sql()]}
+          extensions={[sql({ schema: sqlSchema })]}
           onChange={onChange}
           className="h-full text-sm"
           basicSetup={{
