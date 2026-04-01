@@ -3,7 +3,8 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { SQLEditor } from "@/components/editor/SQLEditor";
 import { SchemaVisualizer } from "@/components/schema/SchemaVisualizer";
 import { ResultsPanel } from "@/components/results/ResultsPanel";
-import { getMockResultForQuery } from "@/data/mock";
+import { ExplainPanel } from "@/components/results/ExplainPanel";
+import { getMockResultForQuery, mockExplainPlan } from "@/data/mock";
 import { toast } from "sonner";
 
 export type QueryHistoryItem = {
@@ -32,7 +33,9 @@ export function Workspace({
   const [results, setResults] = useState<any[] | null>(null);
   const [queryName, setQueryName] = useState<string | null>(null);
   const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
-  const [resultsTab, setResultsTab] = useState<"results" | "chart" | "explain">("results");
+  const [resultsTab, setResultsTab] = useState<"results" | "chart">("results");
+  const [isExplainOpen, setIsExplainOpen] = useState(false);
+  const [explainPlan, setExplainPlan] = useState<any | null>(null);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -51,6 +54,7 @@ export function Workspace({
     setQueryName(null);
     setExecutionTime(null);
     setResultsTab("results");
+    setIsExplainOpen(false);
     
     setQueryHistory(prev => {
       if (prev.length > 0 && prev[0].query === activeTab.query) return prev;
@@ -76,8 +80,10 @@ export function Workspace({
       return;
     }
     setIsRunning(true);
-    setResultsTab("explain");
+    setIsExplainOpen(true);
+    
     setTimeout(() => {
+      setExplainPlan(mockExplainPlan);
       setIsRunning(false);
     }, 400);
   };
@@ -119,13 +125,22 @@ export function Workspace({
             />
           </Panel>
           
+          {isExplainOpen && (
+            <>
+              <ResizeHandle direction="vertical" />
+              <Panel defaultSize={25} minSize={15}>
+                <ExplainPanel plan={explainPlan} onClose={() => setIsExplainOpen(false)} />
+              </Panel>
+            </>
+          )}
+
           <ResizeHandle direction="vertical" />
           
-          <Panel defaultSize={50} minSize={20}>
+          <Panel defaultSize={isExplainOpen ? 25 : 50} minSize={20}>
             <ResultsPanel 
               data={results} 
               queryName={queryName} 
-              isLoading={isRunning} 
+              isLoading={isRunning && !isExplainOpen} 
               activeTab={resultsTab}
               onTabChange={setResultsTab}
             />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, BarChart2, GitMerge, Download } from "lucide-react";
+import { Table, BarChart2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -11,17 +11,15 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
 } from "recharts";
-import { mockExplainPlan } from "@/data/mock";
+import { DataTable } from "./DataTable";
 
 interface ResultsPanelProps {
   data: any[] | null;
   queryName: string | null;
   isLoading: boolean;
-  activeTab: "results" | "chart" | "explain";
-  onTabChange: (tab: "results" | "chart" | "explain") => void;
+  activeTab: "results" | "chart";
+  onTabChange: (tab: "results" | "chart") => void;
 }
 
 export function ResultsPanel({ data, queryName, isLoading, activeTab, onTabChange }: ResultsPanelProps) {
@@ -63,21 +61,15 @@ export function ResultsPanel({ data, queryName, isLoading, activeTab, onTabChang
         <div className="flex items-center gap-1">
           <TabButton
             active={activeTab === "results"}
-            onClick={() => setActiveTab("results")}
+            onClick={() => onTabChange("results")}
             icon={Table}
             label="Results"
           />
           <TabButton
             active={activeTab === "chart"}
-            onClick={() => setActiveTab("chart")}
+            onClick={() => onTabChange("chart")}
             icon={BarChart2}
             label="Charts"
-          />
-          <TabButton
-            active={activeTab === "explain"}
-            onClick={() => setActiveTab("explain")}
-            icon={GitMerge}
-            label="Explain"
           />
         </div>
         
@@ -98,30 +90,7 @@ export function ResultsPanel({ data, queryName, isLoading, activeTab, onTabChang
       {/* Content */}
       <div className="flex-1 overflow-auto p-0">
         {activeTab === "results" && (
-          <div className="min-w-max">
-            <table className="w-full text-left text-sm text-zinc-300">
-              <thead className="sticky top-0 bg-zinc-900 text-xs uppercase text-zinc-400 shadow-sm">
-                <tr>
-                  {columns.map((col) => (
-                    <th key={col} className="border-b border-zinc-800 px-4 py-2 font-medium">
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row, i) => (
-                  <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
-                    {columns.map((col) => (
-                      <td key={col} className="whitespace-nowrap px-4 py-2">
-                        {row[col] !== null ? String(row[col]) : <span className="text-zinc-600">null</span>}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable data={data} columns={columns} />
         )}
 
         {activeTab === "chart" && (
@@ -149,12 +118,6 @@ export function ResultsPanel({ data, queryName, isLoading, activeTab, onTabChang
             </div>
           </div>
         )}
-
-        {activeTab === "explain" && (
-          <div className="p-4">
-            <ExplainNode node={mockExplainPlan} />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -171,27 +134,5 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean; on
       <Icon className="h-3.5 w-3.5" />
       {label}
     </button>
-  );
-}
-
-function ExplainNode({ node }: { key?: React.Key; node: any }) {
-  return (
-    <div className="ml-4 mt-2 flex flex-col items-start">
-      <div className="flex flex-col rounded-md border border-zinc-700 bg-zinc-900 p-3 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-blue-400">{node.name}</span>
-          <span className="text-xs text-zinc-500">cost: {node.cost}</span>
-        </div>
-        <div className="mt-1 text-xs text-zinc-300">{node.details}</div>
-        <div className="mt-1 text-xs text-zinc-500">rows: {node.rows}</div>
-      </div>
-      {node.children && node.children.length > 0 && (
-        <div className="ml-6 border-l-2 border-zinc-800 pl-4">
-          {node.children.map((child: any, i: number) => (
-            <ExplainNode key={i} node={child} />
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
