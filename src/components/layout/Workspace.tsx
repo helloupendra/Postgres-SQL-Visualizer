@@ -4,8 +4,9 @@ import { SQLEditor } from "@/components/editor/SQLEditor";
 import { SchemaVisualizer } from "@/components/schema/SchemaVisualizer";
 import { ResultsPanel } from "@/components/results/ResultsPanel";
 import { ExplainPanel } from "@/components/results/ExplainPanel";
-import { mockExplainPlan } from "@/data/mock";
+import { mockSavedQueries } from "@/data/mock";
 import { toast } from "sonner";
+import { motion } from "motion/react";
 
 export type QueryHistoryItem = {
   query: string;
@@ -36,14 +37,16 @@ export function Workspace({
   const [resultsTab, setResultsTab] = useState<"results" | "chart">("results");
   const [isExplainOpen, setIsExplainOpen] = useState(false);
   const [explainPlan, setExplainPlan] = useState<any | null>(null);
+  const [isSchemaVisible, setIsSchemaVisible] = useState(true);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+  const sampleQuery = mockSavedQueries[0];
 
   const handleQueryChange = (val: string) => {
     setTabs(tabs.map(t => t.id === activeTabId ? { ...t, query: val } : t));
   };
 
-  const handleRunQuery = () => {
+  const handleRunQuery = async () => {
     if (!activeTab?.query.trim()) {
       toast.error("Please enter a query to run");
       return;
@@ -139,10 +142,28 @@ export function Workspace({
     }
   };
 
+  const handleLoadSampleQuery = () => {
+    if (!activeTab) return;
+
+    setTabs(
+      tabs.map((tab) =>
+        tab.id === activeTabId
+          ? {
+              ...tab,
+              name: tab.query.trim() ? tab.name : "sample-revenue.sql",
+              query: sampleQuery.sql,
+            }
+          : tab,
+      ),
+    );
+    setResultsTab("results");
+    toast.success(`Loaded sample query: ${sampleQuery.name}`);
+  };
+
   return (
     <PanelGroup direction="horizontal" className="h-full w-full overflow-hidden bg-zinc-950">
       {/* Left Panel: Editor & Results */}
-      <Panel defaultSize={60} minSize={30}>
+      <Panel defaultSize={58} minSize={28}>
         <PanelGroup direction="vertical">
           <Panel defaultSize={50} minSize={20}>
             <SQLEditor
@@ -158,6 +179,8 @@ export function Workspace({
               onTabChange={setActiveTabId}
               onTabAdd={handleTabAdd}
               onTabClose={handleTabClose}
+              isSchemaVisible={isSchemaVisible}
+              onToggleSchema={() => setIsSchemaVisible(!isSchemaVisible)}
             />
           </Panel>
           
@@ -184,24 +207,26 @@ export function Workspace({
         </PanelGroup>
       </Panel>
 
-      <ResizeHandle direction="horizontal" />
+      {isSchemaVisible && (
+        <>
+          <ResizeHandle direction="horizontal" />
 
-      {/* Right Panel: Schema Visualizer */}
-      <Panel defaultSize={40} minSize={20}>
-        <div className="flex h-full flex-col border-l border-zinc-800 bg-zinc-950">
-          <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-            <h2 className="text-sm font-semibold text-zinc-100">Schema Visualizer</h2>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
-                e-commerce_db
-              </span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <SchemaVisualizer />
-          </div>
-        </div>
-      </Panel>
+          {/* Right Panel: Schema Visualizer */}
+          <Panel defaultSize={42} minSize={24} maxSize={55}>
+            <motion.div
+              initial={{ opacity: 0, x: 28 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              className="h-full bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.06),transparent_34%),linear-gradient(180deg,#05070b,#090c11)] p-2 pl-1.5"
+            >
+              <SchemaVisualizer
+                onClose={() => setIsSchemaVisible(false)}
+                onLoadSampleQuery={handleLoadSampleQuery}
+              />
+            </motion.div>
+          </Panel>
+        </>
+      )}
     </PanelGroup>
   );
 }
@@ -209,13 +234,13 @@ export function Workspace({
 function ResizeHandle({ direction }: { direction: "horizontal" | "vertical" }) {
   return (
     <PanelResizeHandle
-      className={`flex items-center justify-center bg-zinc-900 transition-colors hover:bg-blue-500/50 active:bg-blue-500 ${
-        direction === "horizontal" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize"
+      className={`group relative flex items-center justify-center bg-transparent transition-colors ${
+        direction === "horizontal" ? "w-3 -mx-1 cursor-col-resize" : "h-3 -my-1 cursor-row-resize"
       }`}
     >
       <div
-        className={`rounded-full bg-zinc-700 ${
-          direction === "horizontal" ? "h-8 w-0.5" : "h-0.5 w-8"
+        className={`rounded-full bg-zinc-800/90 transition-all duration-200 group-hover:bg-cyan-300/70 ${
+          direction === "horizontal" ? "h-20 w-px group-hover:h-24" : "h-px w-20 group-hover:w-24"
         }`}
       />
     </PanelResizeHandle>

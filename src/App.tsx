@@ -18,13 +18,6 @@ export default function App() {
   const [savedQueries, setSavedQueries] = useState(mockSavedQueries);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
 
-  React.useEffect(() => {
-    toast("Welcome to Postgres SQL Visualizer", {
-      description: "Connected to mock e-commerce database. Try running a query!",
-      duration: 5000,
-    });
-  }, []);
-
   const handleSelectQuery = (sql: string, name?: string) => {
     const newId = Date.now().toString();
     setTabs([...tabs, { id: newId, name: name || `query-${tabs.length + 1}.sql`, query: sql }]);

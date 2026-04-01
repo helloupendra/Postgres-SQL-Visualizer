@@ -15,9 +15,100 @@
 
 :root {
   color-scheme: dark;
+  --font-sans:
+    "Sohne",
+    "IBM Plex Sans",
+    "SF Pro Display",
+    "Segoe UI",
+    sans-serif;
+  --font-mono:
+    "JetBrains Mono",
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  background-color: var(--color-background);
+  background:
+    radial-gradient(circle at top center, rgba(34, 211, 238, 0.06), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.08), transparent 30%),
+    var(--color-background);
   color: var(--color-foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+code,
+pre,
+.cm-content,
+.cm-gutters {
+  font-family: var(--font-mono);
+}
+
+* {
+  scrollbar-color: rgba(82, 101, 128, 0.64) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: rgba(82, 101, 128, 0.42);
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane.dragging {
+  cursor: grabbing;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__edge-text {
+  fill: #e2e8f0;
+}
+
+.react-flow__handle {
+  opacity: 0;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  transform: scale(0.9);
+}
+
+.react-flow__node:hover .react-flow__handle,
+.react-flow__node.selected .react-flow__handle {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

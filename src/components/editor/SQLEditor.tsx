@@ -1,9 +1,9 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
-import { Play, Save, FileCode2, History, AlignLeft, Clock, X, Plus, GitMerge, ChevronDown, Code } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Play, Save, FileCode2, History, AlignLeft, Clock, X, Plus, GitMerge, ChevronDown, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -23,6 +23,8 @@ interface SQLEditorProps {
   onTabChange: (id: string) => void;
   onTabAdd: () => void;
   onTabClose: (id: string) => void;
+  isSchemaVisible: boolean;
+  onToggleSchema: () => void;
 }
 
 export function SQLEditor({ 
@@ -37,7 +39,9 @@ export function SQLEditor({
   activeTabId,
   onTabChange,
   onTabAdd,
-  onTabClose
+  onTabClose,
+  isSchemaVisible,
+  onToggleSchema
 }: SQLEditorProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSaveOpen, setIsSaveOpen] = useState(false);
@@ -307,11 +311,31 @@ export function SQLEditor({
           
           <Tooltip>
             <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleSchema}
+                className={cn(
+                  "h-8 gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all duration-200",
+                  isSchemaVisible
+                    ? "border-cyan-300/20 bg-cyan-300/10 text-cyan-100 shadow-[0_10px_20px_rgba(6,182,212,0.12)] hover:bg-cyan-300/14 hover:text-white"
+                    : "border-transparent text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900/90 hover:text-zinc-100",
+                )}
+              >
+                {isSchemaVisible ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+                Schema
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isSchemaVisible ? "Hide Schema Visualizer" : "Show Schema Visualizer"}</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button 
                 size="sm" 
                 onClick={onRun} 
                 disabled={isRunning}
-                className="h-7 gap-1 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                className="h-8 gap-1.5 rounded-xl bg-[linear-gradient(135deg,#10b981,#059669)] px-4 text-xs font-semibold text-white shadow-[0_14px_28px_rgba(5,150,105,0.22)] hover:brightness-110"
               >
                 <Play className="h-3.5 w-3.5" />
                 {isRunning ? "Running..." : "Run Query"}
