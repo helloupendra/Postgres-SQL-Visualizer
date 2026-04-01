@@ -40,7 +40,7 @@ export function Sidebar({ onSelectQuery, savedQueries }: SidebarProps) {
             <TreeItem icon={Folder} label="Schemas" expanded={expanded.public} onClick={() => toggle("public")}>
               <TreeItem icon={Folder} label="public" expanded={expanded.tables} onClick={() => toggle("tables")}>
                 
-                <TreeItem icon={Folder} label="Tables" expanded={expanded.tablesList} onClick={() => toggle("tablesList")}>
+                <TreeItem icon={Folder} label={`Tables (${mockSchema.length})`} expanded={expanded.tablesList} onClick={() => toggle("tablesList")}>
                   {mockSchema.map(table => (
                     <TreeItem key={table.id} icon={Table2} label={table.name} isLeaf />
                   ))}
