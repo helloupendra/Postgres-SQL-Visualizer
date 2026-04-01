@@ -9,6 +9,8 @@ export type Column = {
 export type Table = {
   id: string;
   name: string;
+  schema?: string;
+  description?: string;
   columns: Column[];
 };
 
@@ -16,6 +18,8 @@ export const mockSchema: Table[] = [
   {
     id: "users",
     name: "users",
+    schema: "public",
+    description: "Stores user account information",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "email", type: "varchar(255)" },
@@ -27,6 +31,8 @@ export const mockSchema: Table[] = [
   {
     id: "products",
     name: "products",
+    schema: "public",
+    description: "Catalog of all products available for sale",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "name", type: "varchar(255)" },
@@ -39,6 +45,8 @@ export const mockSchema: Table[] = [
   {
     id: "categories",
     name: "categories",
+    schema: "public",
+    description: "Product categories hierarchy",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "name", type: "varchar(100)" },
@@ -48,6 +56,8 @@ export const mockSchema: Table[] = [
   {
     id: "orders",
     name: "orders",
+    schema: "sales",
+    description: "Customer orders and their status",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "user_id", type: "uuid", isForeign: true, references: "users.id" },
@@ -59,6 +69,8 @@ export const mockSchema: Table[] = [
   {
     id: "order_items",
     name: "order_items",
+    schema: "sales",
+    description: "Individual items within an order",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "order_id", type: "uuid", isForeign: true, references: "orders.id" },
@@ -70,6 +82,8 @@ export const mockSchema: Table[] = [
   {
     id: "payments",
     name: "payments",
+    schema: "sales",
+    description: "Payment transactions for orders",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "order_id", type: "uuid", isForeign: true, references: "orders.id" },
@@ -82,6 +96,8 @@ export const mockSchema: Table[] = [
   {
     id: "inventory",
     name: "inventory",
+    schema: "logistics",
+    description: "Warehouse inventory tracking",
     columns: [
       { name: "id", type: "uuid", isPrimary: true },
       { name: "product_id", type: "uuid", isForeign: true, references: "products.id" },
